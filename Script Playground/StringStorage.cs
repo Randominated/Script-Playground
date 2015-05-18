@@ -56,7 +56,7 @@ namespace Script_Playground
             p.Dump("---");
             p.BenchmarkRead(100000);
             p.Dump("---");
-            */
+            /*
             
             /*
             //100 000 iterations go for 30 mins
