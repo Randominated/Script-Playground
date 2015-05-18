@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Script_Playground
 
 {
-    class Program
+    class StringStorage
     {
         //Storage is the only persistent variable
         public string Storage { get; set; }
@@ -20,7 +20,7 @@ namespace Script_Playground
 
         static void Main(string[] args)
         {
-            Program p = new Program();
+            StringStorage p = new StringStorage();
 
             if (Object.Equals(p.ReadBuffer, default(Dictionary<string, string>)))
             {
