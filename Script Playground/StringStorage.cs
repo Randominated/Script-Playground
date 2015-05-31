@@ -24,6 +24,16 @@ namespace Script_Playground
             PopulateReadBuffer();
         }
 
+        public StringStorage(Dictionary<string, string> transferBuffer)
+        {
+            ReadBuffer = transferBuffer;
+        }
+
+        public StringStorage(StringStorage transferClass)
+        {
+            ReadBuffer = transferClass.ReadBuffer;
+        }
+
         private string[,] Disassemble(string d)
         {
             //input compiled string, return string array
@@ -42,43 +52,6 @@ namespace Script_Playground
 
             return da;
         }
-
-        #region DEPRECATED Disassemble()
-        private string[,] Disassemble(string d, bool splitversion)
-        {
-            //input compiled string, return string array
-            string[] ds = d.Split(new char[] { D_D_DELIM }, StringSplitOptions.RemoveEmptyEntries);
-            string[,] da = new string[ds.Length, 2];
-            int s;
-
-            if (!splitversion)
-            {
-                for (int i = 0; i < ds.Length; i++)
-                {
-                    s = ds[i].IndexOf(ID_D_DELIM);
-                    if (s >= 0)
-                    {
-                        da[i, 0] = ds[i].Substring(0, s);
-                        da[i, 1] = ds[i].Substring(s + 1);
-                    }
-                }
-            }
-
-            if (splitversion)
-            {
-                string[] t;
-                for (int i = 0; i < ds.Length; i++)
-                {
-                    t = ds[i].Split(ID_D_DELIM);
-                    for (int j = 0; j < t.Length; j++)
-                    {
-                        da[i, j] = t[j];
-                    }
-                }
-            }
-            return da;
-        }
-        #endregion
 
         private string Assemble(string[,] da)
         {
@@ -101,21 +74,7 @@ namespace Script_Playground
             ReadBuffer[id] = data;
         }
 
-        #region DEPRECATED Store()
-        private void Store(string id, string data, bool plusversion)
-        {
-            if (!plusversion)
-            {
-                Storage = new StringBuilder().Append(Storage).Append(id.ToString()).Append(ID_D_DELIM).Append(data.ToString()).Append(D_D_DELIM).ToString();
-            }
-            if (plusversion)
-            {
-                Storage = new StringBuilder().Append(Storage + id.ToString() + ID_D_DELIM + data.ToString() + D_D_DELIM).ToString();
-            }
-        }
-        #endregion
-
-        public string Retrieve(string id)
+        public string Remove(string id)
         {
             //input id, disassemble, get AND REMOVE data, assemble AND SAVE storage, return data
             string d = null;
@@ -136,7 +95,7 @@ namespace Script_Playground
             return d;
         }
 
-        public void Remove(string id)
+        public void Remove_old(string id)
         {
             //input id, disassemble, remove data, assemble AND SAVE storage
             string[,] da = Disassemble(Storage);
@@ -159,23 +118,6 @@ namespace Script_Playground
             ReadBuffer.TryGetValue(id, out s);
             return s;
         }
-
-        #region DEPRECATED Unbuffered Read
-        private string UBRead(string id)
-        {
-            //input id, disassemble, get data, return data
-            string[,] da = Disassemble(Storage);
-            for (int i = 0; i < da.GetLength(0); i++)
-            {
-                if (da[i, 0].Equals(id))
-                {
-                    return da[i, 1];
-                }
-            }
-            return null;
-        }
-
-        #endregion
 
         public void CreateReadBuffer()
         {
@@ -276,7 +218,7 @@ namespace Script_Playground
         private void TestRetrieve()
         {
             Store("Remove me", "NO! I wish to be retrieved!");
-            Dump(Retrieve("Remove me"));
+            Dump(Remove("Remove me"));
             if (Storage.Length == 0 && ReadBuffer.Count == 0)
             {
                 Dump("Test of Retrieve() successful!");
@@ -286,7 +228,7 @@ namespace Script_Playground
         private void TestRemove()
         {
             Store("Fuck you", "I'm a bad influence and need to be purged!");
-            Remove("Fuck you");
+            Remove_old("Fuck you");
             if (Storage.Length == 0 && ReadBuffer.Count == 0)
             {
                 Dump("Test of Remove() successful!");
@@ -446,7 +388,7 @@ namespace Script_Playground
 
             for (int i = 0; i < iterations; i++)
             {
-                Retrieve(i.ToString());
+                Remove(i.ToString());
             }
 
             sw.Stop();
@@ -464,7 +406,7 @@ namespace Script_Playground
 
             for (int i = 0; i < iterations; i++)
             {
-                Remove(i.ToString());
+                Remove_old(i.ToString());
             }
 
             sw.Stop();
