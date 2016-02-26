@@ -70,7 +70,15 @@ namespace Script_Playground
 
         public void Store(string id, string data)
         {
-            Storage = new StringBuilder().Append(Storage).Append(id.ToString()).Append(ID_D_DELIM).Append(data.ToString()).Append(D_D_DELIM).ToString();
+            if (ReadBuffer.ContainsKey(id))
+            {
+                Update(id, data);
+            }
+            else
+            {
+                Storage = new StringBuilder().Append(Storage).Append(id.ToString()).Append(ID_D_DELIM).Append(data.ToString()).Append(D_D_DELIM).ToString();
+            }
+
             ReadBuffer[id] = data;
         }
 
@@ -93,23 +101,6 @@ namespace Script_Playground
             ReadBuffer.Remove(id);
 
             return d;
-        }
-
-        public void Remove_old(string id)
-        {
-            //input id, disassemble, remove data, assemble AND SAVE storage
-            string[,] da = Disassemble(Storage);
-            for (int i = 0; i < da.GetLength(0); i++)
-            {
-                if (da[i, 0].Equals(id))
-                {
-                    da[i, 0] = null;
-                    da[i, 1] = null;
-                }
-            }
-            Storage = Assemble(da);
-
-            ReadBuffer.Remove(id);
         }
 
         public string Read(string id)
@@ -160,14 +151,12 @@ namespace Script_Playground
                 }
             }
 
-            ReadBuffer[id] = data;
-
             return c;
         }
 
         #region test methods
 
-        private void TestStore()
+        public void TestStore()
         {
             Store("test", "this is a test");
             Dump(Storage);
@@ -177,7 +166,7 @@ namespace Script_Playground
             }
         }
 
-        private void TestAssemble()
+        public void TestAssemble()
         {
             string s = Assemble(new string[,] { { "1", "2" }, { "3", "4" }, { "5", "6" } });
             Dump(s);
@@ -187,7 +176,7 @@ namespace Script_Playground
             }
         }
 
-        private void TestDisassemble()
+        public void TestDisassemble()
         {
             string[,] sa = Disassemble("0§0|1§1|2§2");
             DumpA2(sa);
@@ -205,7 +194,7 @@ namespace Script_Playground
             }
         }
 
-        private void TestRead()
+        public void TestRead()
         {
             Store("airLevel", "wan milian perzint!");
             Dump(Read("airLevel"));
@@ -215,7 +204,7 @@ namespace Script_Playground
             }
         }
 
-        private void TestRetrieve()
+        public void TestRetrieve()
         {
             Store("Remove me", "NO! I wish to be retrieved!");
             Dump(Remove("Remove me"));
@@ -225,17 +214,17 @@ namespace Script_Playground
             }
         }
 
-        private void TestRemove()
+        public void TestRemove()
         {
             Store("Fuck you", "I'm a bad influence and need to be purged!");
-            Remove_old("Fuck you");
+            Remove("Fuck you");
             if (Storage.Length == 0 && ReadBuffer.Count == 0)
             {
                 Dump("Test of Remove() successful!");
             }
         }
 
-        private void TestUpdate()
+        public void TestUpdate()
         {
             Store("The times", "Is a magazine for old ppl");
             Update("The times", "They are 'a changin'");
@@ -249,7 +238,7 @@ namespace Script_Playground
 
         #region benchmark methods
 
-        private void BenchmarkStore(int iterations)
+        public void BenchmarkStore(int iterations)
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
@@ -260,10 +249,10 @@ namespace Script_Playground
             }
 
             stopwatch.Stop();
-            Dump("Bench of Store: Time elapsed over " + iterations + " iterations: " + stopwatch.Elapsed.ToString());
+            Dump("Bench of Store: Time elapsed over " + iterations + " iterations: " + stopwatch.Elapsed.ToString() + ", size of Storage is now " + Storage.Length.ToString() + " characters.");
         }
 
-        private void BenchmarkAssemble(int iterations)
+        public void BenchmarkAssemble(int iterations)
         {
             for (int i = 0; i < iterations; i++)
             {
@@ -312,7 +301,7 @@ namespace Script_Playground
             Dump("Bench of Assemble: Time elapsed over " + iterations + " iterations on a 100-point string: " + stopwatch.Elapsed.ToString());
         }
 
-        private void BenchmarkDisassemble(int iterations, bool splitversion)
+        public void BenchmarkDisassemble(int iterations)
         {
             for (int i = 0; i < iterations; i++)
             {
@@ -322,10 +311,10 @@ namespace Script_Playground
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            Disassemble(Storage, splitversion);
+            Disassemble(Storage);
 
             stopwatch.Stop();
-            Dump("Bench of Disassemble: Time elapsed over ONE string with size of " + iterations + " data points: " + stopwatch.Elapsed.ToString() + ", splitversion " + splitversion);
+            Dump("Bench of Disassemble: Time elapsed over ONE string with size of " + iterations + " data points: " + stopwatch.Elapsed.ToString());
             stopwatch.Reset();
             StringBuilder t = new StringBuilder();
             for (int i = 0; i < 10; i++)
@@ -341,7 +330,7 @@ namespace Script_Playground
             }
 
             stopwatch.Stop();
-            Dump("Bench of Disassemble: Time elapsed over " + iterations + " iterations on a 10-point string: " + stopwatch.Elapsed.ToString() + ", splitversion " + splitversion);
+            Dump("Bench of Disassemble: Time elapsed over " + iterations + " iterations on a 10-point string: " + stopwatch.Elapsed.ToString());
             stopwatch.Reset();
             t = new StringBuilder();
             for (int i = 0; i < 100; i++)
@@ -356,10 +345,10 @@ namespace Script_Playground
             }
 
             stopwatch.Stop();
-            Dump("Bench of Disassemble: Time elapsed over " + iterations + " iterations on a 100-point string: " + stopwatch.Elapsed.ToString() + ", splitversion " + splitversion);
+            Dump("Bench of Disassemble: Time elapsed over " + iterations + " iterations on a 100-point string: " + stopwatch.Elapsed.ToString());
         }
 
-        private void BenchmarkRead(int iterations)
+        public void BenchmarkRead(int iterations)
         {
             for (int i = 0; i < iterations; i++)
             {
@@ -377,7 +366,7 @@ namespace Script_Playground
             Dump("Bench of Read: Time elapsed over " + iterations + " iterations: " + stopwatch.Elapsed.ToString());
         }
 
-        private void BenchmarkRetrieve(int iterations)
+        public void BenchmarkRemove(int iterations)
         {
             for (int i = 0; i < iterations; i++)
             {
@@ -392,28 +381,10 @@ namespace Script_Playground
             }
 
             sw.Stop();
-            Dump("Bench of Retrieve: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
-        }
-
-        private void BenchmarkRemove(int iterations)
-        {
-            for (int i = 0; i < iterations; i++)
-            {
-                Store(i.ToString(), (i + 1).ToString());
-            }
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
-            for (int i = 0; i < iterations; i++)
-            {
-                Remove_old(i.ToString());
-            }
-
-            sw.Stop();
             Dump("Bench of Remove: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
         }
 
-        private void BenchmarkUpdate(int iterations)
+        public void BenchmarkUpdate(int iterations)
         {
             for (int i = 0; i < iterations; i++)
             {
@@ -435,11 +406,11 @@ namespace Script_Playground
 
         #region debug methods
 
-        private void Dump(string d){
+        public void Dump(string d){
             Debug.WriteLine(d);
         }
 
-        private void DumpA(string[] d)
+        public void DumpA(string[] d)
         {
             foreach (string l in d)
             {
@@ -447,7 +418,7 @@ namespace Script_Playground
             }
         }
 
-        private void DumpA2(string[,] d)
+        public void DumpA2(string[,] d)
         {
             for (int i = 0; i < d.GetLength(0); i++)
             {

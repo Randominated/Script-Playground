@@ -20,12 +20,13 @@ namespace Script_Playground
 
             #region TestDefinitions
 
-            /*
+            
+            p.TestStore();
             p.TestStore();
             p.Dump("---");
-            p.BenchmarkStore(10);
+            p.BenchmarkStore(1000);
             p.Dump("---");
-            */
+            
 
             /*
             p.TestAssemble();
@@ -44,9 +45,9 @@ namespace Script_Playground
             /*
             p.TestRead();
             p.Dump("---");
-            p.BenchmarkRead(100000);
+            p.BenchmarkRead(1000);
             p.Dump("---");
-            /*
+            */
             
             /*
             //100 000 iterations go for 30 mins
