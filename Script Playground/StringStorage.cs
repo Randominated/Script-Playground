@@ -194,7 +194,7 @@ namespace Script_Playground
             //We now possess all the information we need to either remove the id-data pair, update its data or just return the data value :)
 
             //Step one
-            int idIndex = Storage.IndexOf(id + ID_D_DELIM);
+            int idIndex = Storage.IndexOf(id + ID_D_DELIM, StringComparison.Ordinal);
 
             if (idIndex == -1)
             {

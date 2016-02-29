@@ -81,6 +81,11 @@ namespace Script_Playground
 
             /*
             //100 000 iterations go for ~32 mins
+            //100000 iterations: 00:06:52.0611178 with Ordinal!!
+            //StringComparison.Ordinal:
+            //10000 iterations: 00:00:02.4461296
+            //No StringComparison.Ordinal:
+            //10000 iterations: 00:00:15.3531958
             p.Dump("Testing UpdateOpt...");
             p.TestUpdateOpt();
             p.Dump("---");
