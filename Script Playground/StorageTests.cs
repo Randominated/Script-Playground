@@ -20,36 +20,39 @@ namespace Script_Playground
 
             #region TestDefinitions
 
-            
-            p.TestStore();
+            /*
+            //100 000 iterations go for ~1min 40sec
             p.TestStore();
             p.Dump("---");
-            p.BenchmarkStore(1000);
+            p.BenchmarkStore(10000);
             p.Dump("---");
-            
+            */
 
             /*
+            //100 000 iterations go for <1sec
             p.TestAssemble();
             p.Dump("---");
             p.BenchmarkAssemble(100000);
             */
 
             /*
+            //100 000 iterations go for <1sec
             p.TestDisassemble();
             p.Dump("---");
-            p.BenchmarkDisassemble(10000, false);
+            p.BenchmarkDisassemble(100000);
             p.Dump("---");
-            p.BenchmarkDisassemble(10000, true);
             */
 
             /*
+            //100 000 iterations go for <0.02sec
             p.TestRead();
             p.Dump("---");
-            p.BenchmarkRead(1000);
+            p.BenchmarkRead(100000);
             p.Dump("---");
             */
             
             /*
+            //This version uses unoptimized Assemble() and Disassemble()!!!
             //100 000 iterations go for 30 mins
             p.TestRetrieve();
             p.Dump("---");
@@ -58,6 +61,7 @@ namespace Script_Playground
             */
 
             /*
+            //This version uses unoptimized Assemble() and Disassemble()!!!
             //100 000 iterations go for ~30 mins
             p.TestRemove();
             p.Dump("---");
@@ -66,10 +70,21 @@ namespace Script_Playground
             */
 
             /*
+            //This version uses unoptimized Assemble() and Disassemble()!!!
             //100 000 iterations go for 30++++ mins
+            p.Dump("Testing Update...");
             p.TestUpdate();
             p.Dump("---");
             p.BenchmarkUpdate(10000);
+            p.Dump("---");
+            */
+
+            /*
+            //100 000 iterations go for ~32 mins
+            p.Dump("Testing UpdateOpt...");
+            p.TestUpdateOpt();
+            p.Dump("---");
+            p.BenchmarkUpdateOpt(100000);
             p.Dump("---");
             */
 

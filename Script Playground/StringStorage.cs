@@ -138,7 +138,6 @@ namespace Script_Playground
         private bool Update(string id, string data)
         {
             //input id + data, disassemble, update id with data, assemble AND SAVE storage, return true if update happened, false for no id match
-            bool c = false;
             string[,] da = Disassemble(Storage);
             for (int i = 0; i < da.GetLength(0); i++)
             {
@@ -146,12 +145,89 @@ namespace Script_Playground
                 {
                     da[i, 1] = data;
                     Storage = Assemble(da);
-                    c = true;
-                    break;
+                    ReadBuffer[id] = data;
+                    return true;
                 }
             }
+            return false;
+        }
 
-            return c;
+        //WIP on Refactoring Update(), optimization-tests using string-level search instead of full parsing of Storage pre-lookup
+        private bool UpdateOpt(string id, string data)
+        {
+
+            //Several variables required for proper overview of id-data pair in string:
+            //      [id]§[data]|
+            //The above is a representation of our id-data pair somewhere inside the string.
+            //In order to successfully find the data in our id-data pair we only need its start index and id-length, which we know.
+            //We also know the length of our delimiters, which are (in this case) both a char, so they occupy 1 "length" each.
+            //In order to successfully manipulate the data-part of our id-data pair we also need two crucial pieces of information:
+            //The end of our id-data pair and the length of the data. We do not know either of these from the get-go but we have a way of finding them;
+            //We can find the position of our data delimiter by way of knowing the position of our id in the string!
+            //In order to acquire these four pieces of information we need to do it in a few steps, as outlined here:
+            //
+            //Step 1: get the index of our id-data pair:
+            //      [id]§[data]|
+            //      ^
+            //We must keep in mind that the id might show up as data for a different id! Therefore we need to make sure that we only get the index of our id.
+            //To do this we simply add the id-delimiter to the id passed as an argument, essentially telling String.IndexOf to look for [id]|.
+            //Before we write code for step two, we might as well check if the id we are looking for really exists inside the string.
+            //This is smart to do in case we mistype the id, or if we ask for it at the wrong point in time, and it saves on instruction count if it turns out that it isn't there after all.
+            //Thus we do a simple if-condition since String.IndexOf returns -1 if what we are looking for is not contained in the string.
+            //
+            //Step 2: we need to find the start of the data in our id-data pair.
+            //Simply adding the length of the id and the delimiter (which is 1) will give us this info.
+            //      [id]§[data]|
+            //           ^
+            //
+            //Step 3: We need to find the end of our id-data pair.
+            //We know where the id-data pair starts, thus we also know that the next data-delimiter tells us the end of our id-data pair!
+            //      [id]§[data]|
+            //                 ^
+            //Handily enough, String.IndexOf allows us to look for the first occurence of the data delimiter after a given index,
+            //so we give it the start-index of our id data pair (that we got in step one) and voila! Now only one step remains:
+            //
+            //Step 4: getting the length of our data.
+            //Since we know where our data starts and where it ends, we subtract the start index from the end index. We also have to remember that
+            //in the previous step, we actually asked String.IndexOf to give us the location of the first data delimiter after our id.
+            //
+            //We now possess all the information we need to either remove the id-data pair, update its data or just return the data value :)
+
+            //Step one
+            int idIndex = Storage.IndexOf(id + ID_D_DELIM);
+
+            if (idIndex == -1)
+            {
+                //If IndexOf does not find our id we exit the method and return false to indicate that the Storage-string is unchanged.
+                return false;
+            }
+
+            //Step two
+            int dataStart = idIndex + id.Length + 1;
+            //Step three
+            int dataEnd = Storage.IndexOf(D_D_DELIM, dataStart);
+            //Step four
+            int dataLength = dataEnd - dataStart;
+
+            //We split the Storage string into two parts;
+            //first part contains the string from the start up to our id-data pair
+            //second part contains the string after our id-data pair up until the end
+            string p1Storage = Storage.Substring(0, idIndex);
+            string p2Storage = Storage.Substring(dataEnd+1);
+
+            //MARK
+            //Now comes the updating part :)
+            //We simply assemble the new Storage string, including the new, updated id-data pair, remembering to include delimiters in the correct places.
+
+            Storage = new StringBuilder().Append(p1Storage).Append(id.ToString()).Append(ID_D_DELIM.ToString()).Append(data.ToString()).Append(D_D_DELIM.ToString()).Append(p2Storage).ToString();
+
+            //We have a read-buffer, and we need to make sure the value there gets updated as well, in case we wish to access it there!
+
+            ReadBuffer[id] = data;
+
+            //we can now return true, since the Storage-string (and the read-buffer) has been updated with the data passed to this method.
+
+            return true;
         }
 
         #region test methods
@@ -234,6 +310,16 @@ namespace Script_Playground
             }
         }
 
+        public void TestUpdateOpt()
+        {
+            Store("The times", "Is a magazine for old ppl");
+            UpdateOpt("The times", "They are 'a changin'");
+            if (Read("The times").Equals("They are 'a changin'"))
+            {
+                Dump("Test of Update() successful!");
+            }
+        }
+
         #endregion
 
         #region benchmark methods
@@ -241,6 +327,7 @@ namespace Script_Playground
         public void BenchmarkStore(int iterations)
         {
             Stopwatch stopwatch = new Stopwatch();
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -261,6 +348,7 @@ namespace Script_Playground
             string[,] ta = Disassemble(Storage);
 
             Stopwatch stopwatch = new Stopwatch();
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             Assemble(ta);
@@ -274,6 +362,7 @@ namespace Script_Playground
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
             ta = Disassemble(t.ToString());
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -290,6 +379,7 @@ namespace Script_Playground
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
             ta = Disassemble(t.ToString());
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -309,6 +399,7 @@ namespace Script_Playground
             }
 
             Stopwatch stopwatch = new Stopwatch();
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             Disassemble(Storage);
@@ -321,7 +412,7 @@ namespace Script_Playground
             {
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
-            Dump("Working on set: " + t.ToString());
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -337,6 +428,7 @@ namespace Script_Playground
             {
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -355,6 +447,7 @@ namespace Script_Playground
                 Store(i.ToString(), (i + 1).ToString());
             }
             Stopwatch stopwatch = new Stopwatch();
+            Dump("Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -373,6 +466,7 @@ namespace Script_Playground
                 Store(i.ToString(), (i + 1).ToString());
             }
             Stopwatch sw = new Stopwatch();
+            Dump("Stopwatch START!");
             sw.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -386,20 +480,62 @@ namespace Script_Playground
 
         public void BenchmarkUpdate(int iterations)
         {
+            //prepare Storage with data
             for (int i = 0; i < iterations; i++)
             {
                 Store(i.ToString(), (i + 1).ToString());
             }
+            Dump(Storage);
+
+            //prepare array of new data for Storage
+            string[] newData = new string[iterations];
+            for (int i = 0; i < iterations; i++)
+            {
+                newData[i] = (i*2).ToString();
+            }
+
             Stopwatch sw = new Stopwatch();
+            Dump("Stopwatch START!");
             sw.Start();
 
             for (int i = 0; i < iterations; i++)
             {
-                Update(i.ToString(), (i+1).ToString());
+                Update(i.ToString(), newData[i]);
             }
 
             sw.Stop();
+            Dump(Storage);
             Dump("Bench of Update: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
+        }
+
+        public void BenchmarkUpdateOpt(int iterations)
+        {
+            //prepare Storage with data
+            for (int i = 0; i < iterations; i++)
+            {
+                Store(i.ToString(), (i + 1).ToString());
+            }
+            Dump(Storage);
+
+            //prepare array of new data for Storage
+            string[] newData = new string[iterations];
+            for (int i = 0; i < iterations; i++)
+            {
+                newData[i] = (i * 2).ToString();
+            }
+
+            Stopwatch sw = new Stopwatch();
+            Dump("Stopwatch START!");
+            sw.Start();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                UpdateOpt(i.ToString(), newData[i]);
+            }
+
+            sw.Stop();
+            Dump(Storage);
+            Dump("Bench of Optimized(?) Update: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
         }
 
         #endregion
