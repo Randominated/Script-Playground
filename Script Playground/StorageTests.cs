@@ -12,12 +12,6 @@ namespace Script_Playground
         {
             StringStorage p = new StringStorage();
 
-            if (Object.Equals(p.ReadBuffer, default(Dictionary<string, string>)))
-            {
-                p.CreateReadBuffer();
-                p.PopulateReadBuffer();
-            }
-
             #region TestDefinitions
 
             /*
@@ -32,14 +26,23 @@ namespace Script_Playground
             //100 000 iterations go for <1sec
             p.TestAssemble();
             p.Dump("---");
-            p.BenchmarkAssemble(100000);
+            p.BenchmarkAssemble(10000);
+            p.Dump("---");
             */
 
             /*
             //100 000 iterations go for <1sec
             p.TestDisassemble();
             p.Dump("---");
-            p.BenchmarkDisassemble(100000);
+            p.BenchmarkDisassemble(10000);
+            p.Dump("---");
+            */
+
+            /*
+            //100 000 not tested yet
+            p.TestDisassembleOpt();
+            p.Dump("---");
+            p.BenchmarkDisassembleOpt(10000);
             p.Dump("---");
             */
 
@@ -47,16 +50,7 @@ namespace Script_Playground
             //100 000 iterations go for <0.02sec
             p.TestRead();
             p.Dump("---");
-            p.BenchmarkRead(100000);
-            p.Dump("---");
-            */
-            
-            /*
-            //This version uses unoptimized Assemble() and Disassemble()!!!
-            //100 000 iterations go for 30 mins
-            p.TestRetrieve();
-            p.Dump("---");
-            p.BenchmarkRetrieve(10000);
+            p.BenchmarkRead(10000);
             p.Dump("---");
             */
 
@@ -65,7 +59,7 @@ namespace Script_Playground
             //100 000 iterations go for ~30 mins
             p.TestRemove();
             p.Dump("---");
-            p.BenchmarkRemove(1000);
+            p.BenchmarkRemove(10000);
             p.Dump("---");
             */
 
@@ -75,21 +69,16 @@ namespace Script_Playground
             p.Dump("Testing Update...");
             p.TestUpdate();
             p.Dump("---");
-            p.BenchmarkUpdate(10000);
+            p.BenchmarkUpdate(1000);
             p.Dump("---");
             */
 
             /*
-            //100 000 iterations go for ~32 mins
-            //100000 iterations: 00:06:52.0611178 with Ordinal!!
-            //StringComparison.Ordinal:
-            //10000 iterations: 00:00:02.4461296
-            //No StringComparison.Ordinal:
-            //10000 iterations: 00:00:15.3531958
+            //100 000 iterations: 00:06:52 with Ordinal!!
             p.Dump("Testing UpdateOpt...");
             p.TestUpdateOpt();
             p.Dump("---");
-            p.BenchmarkUpdateOpt(100000);
+            p.BenchmarkUpdateOpt(1000);
             p.Dump("---");
             */
 

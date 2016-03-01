@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -51,6 +50,25 @@ namespace Script_Playground
             }
 
             return da;
+        }
+
+        //WIP Disassemble to return a Dictionary instead of a 2D-array to test for potential optimizations, if successful this is a precursor to an Assemble() that assembles from a Dictionary
+        private Dictionary<string, string> DisassembleOpt(string d)
+        {
+            //input compiled string, return dictionary
+            string[] ds = d.Split(new char[] { D_D_DELIM }, StringSplitOptions.RemoveEmptyEntries);
+            Dictionary<string, string> dict = new Dictionary<string,string>();
+            int s;
+            for (int i = 0; i < ds.Length; i++)
+            {
+                s = ds[i].IndexOf(ID_D_DELIM);
+                if (s >= 0)
+                {
+                    dict[ds[i].Substring(0, s)] = ds[i].Substring(s + 1);
+                }
+            }
+
+            return dict;
         }
 
         private string Assemble(string[,] da)
@@ -108,6 +126,12 @@ namespace Script_Playground
             string s = null;
             ReadBuffer.TryGetValue(id, out s);
             return s;
+        }
+
+        public void Clear()
+        {
+            Storage = "";
+            ReadBuffer.Clear();
         }
 
         public void CreateReadBuffer()
@@ -170,13 +194,13 @@ namespace Script_Playground
             //      [id]§[data]|
             //      ^
             //We must keep in mind that the id might show up as data for a different id! Therefore we need to make sure that we only get the index of our id.
-            //To do this we simply add the id-delimiter to the id passed as an argument, essentially telling String.IndexOf to look for [id]|.
+            //To do this we simply add the id-delimiter to the id passed as an argument, essentially telling String.IndexOf to look for "[id]|".
             //Before we write code for step two, we might as well check if the id we are looking for really exists inside the string.
             //This is smart to do in case we mistype the id, or if we ask for it at the wrong point in time, and it saves on instruction count if it turns out that it isn't there after all.
             //Thus we do a simple if-condition since String.IndexOf returns -1 if what we are looking for is not contained in the string.
             //
             //Step 2: we need to find the start of the data in our id-data pair.
-            //Simply adding the length of the id and the delimiter (which is 1) will give us this info.
+            //Simply adding the length of the id and the delimiter (which is 1) to the id-data pair index will give us this info.
             //      [id]§[data]|
             //           ^
             //
@@ -188,8 +212,7 @@ namespace Script_Playground
             //so we give it the start-index of our id data pair (that we got in step one) and voila! Now only one step remains:
             //
             //Step 4: getting the length of our data.
-            //Since we know where our data starts and where it ends, we subtract the start index from the end index. We also have to remember that
-            //in the previous step, we actually asked String.IndexOf to give us the location of the first data delimiter after our id.
+            //Since we know where our data starts and where it ends, we subtract the start index from the end index. 
             //
             //We now possess all the information we need to either remove the id-data pair, update its data or just return the data value :)
 
@@ -218,8 +241,10 @@ namespace Script_Playground
             //MARK
             //Now comes the updating part :)
             //We simply assemble the new Storage string, including the new, updated id-data pair, remembering to include delimiters in the correct places.
+            //Here we consider that the last value updated is quite likely to be updated again, therefore it is placed at the start of the storage-string.
+            //This allows for a hierarchy where the most often updated values are nearer the start of the storage-string, potentially improving seek times as the iterator for indexOf starts at index 0.
 
-            Storage = new StringBuilder().Append(p1Storage).Append(id.ToString()).Append(ID_D_DELIM.ToString()).Append(data.ToString()).Append(D_D_DELIM.ToString()).Append(p2Storage).ToString();
+            Storage = new StringBuilder().Append(id.ToString()).Append(ID_D_DELIM.ToString()).Append(data.ToString()).Append(D_D_DELIM.ToString()).Append(p1Storage).Append(p2Storage).ToString();
 
             //We have a read-buffer, and we need to make sure the value there gets updated as well, in case we wish to access it there!
 
@@ -268,6 +293,27 @@ namespace Script_Playground
             {
                 Dump("Test of Disassemble() successful!");
             }
+        }
+
+        public void TestDisassembleOpt()
+        {
+            Dictionary<string, string> dict = DisassembleOpt("0§0|1§1|2§2");
+            dumpD(dict);
+            bool isEqual = true;
+            int i = 0;
+            foreach(KeyValuePair<string, string> kvp in dict)
+            {
+                if (!kvp.Key.Equals(i.ToString()))
+                {
+                    isEqual = false;
+                }
+                i++;
+            }
+            if(isEqual)
+            {
+                Dump("Test of DisassembleOpt() successful!");
+            }
+
         }
 
         public void TestRead()
@@ -327,7 +373,7 @@ namespace Script_Playground
         public void BenchmarkStore(int iterations)
         {
             Stopwatch stopwatch = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -348,7 +394,7 @@ namespace Script_Playground
             string[,] ta = Disassemble(Storage);
 
             Stopwatch stopwatch = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             Assemble(ta);
@@ -362,7 +408,7 @@ namespace Script_Playground
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
             ta = Disassemble(t.ToString());
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -379,7 +425,7 @@ namespace Script_Playground
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
             ta = Disassemble(t.ToString());
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -397,14 +443,14 @@ namespace Script_Playground
             {
                 Store(i.ToString(), (i + 1).ToString());
             }
-
             Stopwatch stopwatch = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             Disassemble(Storage);
 
             stopwatch.Stop();
+            Clear();
             Dump("Bench of Disassemble: Time elapsed over ONE string with size of " + iterations + " data points: " + stopwatch.Elapsed.ToString());
             stopwatch.Reset();
             StringBuilder t = new StringBuilder();
@@ -412,7 +458,7 @@ namespace Script_Playground
             {
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -428,12 +474,61 @@ namespace Script_Playground
             {
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
             {
                 Disassemble(t.ToString());
+            }
+
+            stopwatch.Stop();
+            Dump("Bench of Disassemble: Time elapsed over " + iterations + " iterations on a 100-point string: " + stopwatch.Elapsed.ToString());
+        }
+
+        public void BenchmarkDisassembleOpt(int iterations)
+        {
+            for (int i = 0; i < iterations; i++)
+            {
+                Store(i.ToString(), (i + 1).ToString());
+            }
+            Stopwatch stopwatch = new Stopwatch();
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
+            stopwatch.Start();
+
+            DisassembleOpt(Storage);
+
+            stopwatch.Stop();
+            Clear();
+            Dump("Bench of Disassemble: Time elapsed over ONE string with size of " + iterations + " data points: " + stopwatch.Elapsed.ToString());
+            stopwatch.Reset();
+            StringBuilder t = new StringBuilder();
+            for (int i = 0; i < 10; i++)
+            {
+                t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
+            }
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
+            stopwatch.Start();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DisassembleOpt(t.ToString());
+            }
+
+            stopwatch.Stop();
+            Dump("Bench of Disassemble: Time elapsed over " + iterations + " iterations on a 10-point string: " + stopwatch.Elapsed.ToString());
+            stopwatch.Reset();
+            t = new StringBuilder();
+            for (int i = 0; i < 100; i++)
+            {
+                t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
+            }
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
+            stopwatch.Start();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DisassembleOpt(t.ToString());
             }
 
             stopwatch.Stop();
@@ -447,7 +542,7 @@ namespace Script_Playground
                 Store(i.ToString(), (i + 1).ToString());
             }
             Stopwatch stopwatch = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -466,7 +561,7 @@ namespace Script_Playground
                 Store(i.ToString(), (i + 1).ToString());
             }
             Stopwatch sw = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             sw.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -485,7 +580,6 @@ namespace Script_Playground
             {
                 Store(i.ToString(), (i + 1).ToString());
             }
-            Dump(Storage);
 
             //prepare array of new data for Storage
             string[] newData = new string[iterations];
@@ -495,7 +589,7 @@ namespace Script_Playground
             }
 
             Stopwatch sw = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             sw.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -504,7 +598,6 @@ namespace Script_Playground
             }
 
             sw.Stop();
-            Dump(Storage);
             Dump("Bench of Update: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
         }
 
@@ -515,7 +608,6 @@ namespace Script_Playground
             {
                 Store(i.ToString(), (i + 1).ToString());
             }
-            Dump(Storage);
 
             //prepare array of new data for Storage
             string[] newData = new string[iterations];
@@ -525,7 +617,7 @@ namespace Script_Playground
             }
 
             Stopwatch sw = new Stopwatch();
-            Dump("Stopwatch START!");
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             sw.Start();
 
             for (int i = 0; i < iterations; i++)
@@ -534,8 +626,7 @@ namespace Script_Playground
             }
 
             sw.Stop();
-            Dump(Storage);
-            Dump("Bench of Optimized(?) Update: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
+            Dump("Bench of Optimized Update: Time elapsed over " + iterations + " iterations: " + sw.Elapsed.ToString());
         }
 
         #endregion
@@ -560,6 +651,15 @@ namespace Script_Playground
             {
                 Debug.WriteLine("id:   " + d[i, 0]);
                 Debug.WriteLine("data: " + d[i, 1]);
+            }
+        }
+
+        public void dumpD(Dictionary<string, string> d)
+        {
+            foreach(string id in d.Keys)
+            {
+                Debug.WriteLine("id:   " + id);
+                Debug.WriteLine("data: " + d[id]);
             }
         }
 
