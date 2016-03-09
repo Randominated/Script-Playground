@@ -26,7 +26,15 @@ namespace Script_Playground
             //100 000 iterations go for <1sec
             p.TestAssemble();
             p.Dump("---");
-            p.BenchmarkAssemble(10000);
+            p.BenchmarkAssemble(100000);
+            p.Dump("---");
+            */
+
+            /*
+            //100 000 iterations go for <1sec
+            p.TestAssembleOpt();
+            p.Dump("---");
+            p.BenchmarkAssembleOpt(100000);
             p.Dump("---");
             */
 
@@ -39,10 +47,10 @@ namespace Script_Playground
             */
 
             /*
-            //100 000 not tested yet
+            //100 000 iterations go for ~1.16 sec
             p.TestDisassembleOpt();
             p.Dump("---");
-            p.BenchmarkDisassembleOpt(10000);
+            p.BenchmarkDisassembleOpt(100000);
             p.Dump("---");
             */
 

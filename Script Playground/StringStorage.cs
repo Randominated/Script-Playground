@@ -86,6 +86,17 @@ namespace Script_Playground
             return b.ToString();
         }
 
+        //WIP Assemble to return a string constructed from a Dictionary instead of a 2D-array to test for potential optimizations with similarly refactored Disassemble()
+        private string AssembleOpt(Dictionary<string, string> dict)
+        {
+            StringBuilder b = new StringBuilder();
+            foreach (string k in dict.Keys)
+            {
+                b.Append(k.ToString()).Append(ID_D_DELIM).Append(dict[k].ToString()).Append(D_D_DELIM);
+            }
+            return b.ToString();
+        }
+
         public void Store(string id, string data)
         {
             if (ReadBuffer.ContainsKey(id))
@@ -277,6 +288,19 @@ namespace Script_Playground
             }
         }
 
+        public void TestAssembleOpt()
+        {
+            Dictionary<string, string> d = new Dictionary<string, string>();
+            d["1"]="2";
+            d["3"]="4";
+            d["5"]="6";
+            string s = AssembleOpt(d);
+            if(s.Contains("1§2|") && s.Contains("3§4|") && s.Contains("5§6|"))
+            {
+                Dump("Test of AssembleOpt() successful!");
+            }
+        }
+
         public void TestDisassemble()
         {
             string[,] sa = Disassemble("0§0|1§1|2§2");
@@ -424,7 +448,57 @@ namespace Script_Playground
             {
                 t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
             }
-            ta = Disassemble(t.ToString());
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
+            stopwatch.Start();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                Disassemble(t.ToString());
+            }
+
+            stopwatch.Stop();
+            Dump("Bench of Assemble: Time elapsed over " + iterations + " iterations on a 100-point string: " + stopwatch.Elapsed.ToString());
+        }
+
+        public void BenchmarkAssembleOpt(int iterations)
+        {
+            for (int i = 0; i < iterations; i++)
+            {
+                Store(i.ToString(), (i + 1).ToString());
+            }
+            Dictionary<string, string> ta = DisassembleOpt(Storage);
+
+            Stopwatch stopwatch = new Stopwatch();
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
+            stopwatch.Start();
+
+            AssembleOpt(ta);
+
+            stopwatch.Stop();
+            Dump("Bench of Assemble: Time elapsed over ONE array of " + iterations + " data points: " + stopwatch.Elapsed.ToString());
+            stopwatch.Reset();
+            StringBuilder t = new StringBuilder();
+            for (int i = 0; i < 10; i++)
+            {
+                t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
+            }
+            ta = DisassembleOpt(t.ToString());
+            Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
+            stopwatch.Start();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                AssembleOpt(ta);
+            }
+
+            stopwatch.Stop();
+            Dump("Bench of Assemble: Time elapsed over " + iterations + " iterations on a 10-point string: " + stopwatch.Elapsed.ToString());
+            stopwatch.Reset();
+            t = new StringBuilder();
+            for (int i = 0; i < 100; i++)
+            {
+                t.Append(i.ToString()).Append(ID_D_DELIM).Append(i + 1.ToString()).Append(D_D_DELIM);
+            }
             Dump("Current time: " + System.DateTime.Now.ToShortTimeString() + ", Stopwatch START!");
             stopwatch.Start();
 
